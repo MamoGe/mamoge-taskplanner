@@ -15,7 +15,6 @@ from multiprocessing import Pool
 import ipdb
 
 
-
 class VebasAnt(acopy.ant.Ant):
 
     def __init__(self, alpha=1, beta=3):
@@ -46,7 +45,7 @@ class VebasAnt(acopy.ant.Ant):
             solution.add_node(node)
             unvisited.remove(node)
 
-        #ipdb.set_trace()
+        # ipdb.set_trace()
         solution.close()
 
         #print('solution', solution)
@@ -66,6 +65,7 @@ class VebasAnt(acopy.ant.Ant):
         post = edge['pheromone']
         return post ** self.alpha * pre ** self.beta
 
+
 class VebasColony(acopy.ant.Colony):
 
     def __init__(self, alpha=1, beta=3):
@@ -83,14 +83,17 @@ class VebasColony(acopy.ant.Colony):
 def _call(func, *args):
     return func(*args)
 
+
 def _call_ant_tour(ant, graph):
     return ant.tour(graph)
+
 
 def _call_mp(self, *args):
     ants = args[0][0]
     graph = args[0][1]
 
     return list(chain([ant.tour(graph) for ant in ants]))
+
 
 class VebasMPSolver(acopy.Solver):
 
@@ -99,13 +102,11 @@ class VebasMPSolver(acopy.Solver):
         self.num_processes = num_processes if num_processes else 5
         self.mp = Pool(self.num_processes)
 
-
     def find_solutions(self, graph, ants):
 
         #ant_chunks = [ants[i::self.num_processes] for i in range(self.num_processes)]
 
         _ant_call_w_graph = functools.partial(_call_ant_tour, graph=graph)
-
 
         #results = self.mp.map(_ant_call_w_graph, [ant for ant in ants])
 
@@ -115,10 +116,10 @@ class VebasMPSolver(acopy.Solver):
         #result_list = self.mp.map(_call, [(ant, graph) for ant_chunk in ant_chunks])
 
         #results = []
-        #for r in result_list:
+        # for r in result_list:
         #    results.extend(r)
 
-        #ipdb.set_trace()
+        # ipdb.set_trace()
 
         return results
 
@@ -141,16 +142,12 @@ class VebasMPSolver(acopy.Solver):
             state.graph.edges[edge]['pheromone'] = (1 - self.rho) * p + amount
 
 
-
-
-
-
 class ACOTaskOptimizer():
 
     def __init__(self) -> None:
         self.graph: nx.Graph = None
 
-    def set_graph(self, G:nx.Graph)-> None:
+    def set_graph(self, G: nx.Graph) -> None:
         """set the problem graph to be optimized"""
         self.graph = G
 
@@ -163,37 +160,39 @@ class ACOTaskOptimizer():
         node_end = mamogenx.G_last(self.graph)
 
         print("Calculating distance matrix")
-        distance_matrix = mamogenx.G_distance_matrix(self.graph, distance_fallback=np.nan)
+        distance_matrix = mamogenx.G_distance_matrix(
+            self.graph, distance_fallback=np.nan)
 
         print("Distance matrix", distance_matrix)
 
-        pmatrix = distance_matrix / np.nansum(distance_matrix, axis=1)[:,None]
-        pmatrix = np.nan_to_num(pmatrix,0)
+        pmatrix = distance_matrix / np.nansum(distance_matrix, axis=1)[:, None]
+        pmatrix = np.nan_to_num(pmatrix, 0)
         print("pmatrix", pmatrix)
 
         G = nx.Graph()
 
-        for i,j in permutations(range(0, pmatrix.shape[0]), 2):
-            d_ij = pmatrix[i,j]
-            d_i0 = pmatrix[i,0]
-            d_j0 = pmatrix[j,0]
+        for i, j in permutations(range(0, pmatrix.shape[0]), 2):
+            d_ij = pmatrix[i, j]
+            d_i0 = pmatrix[i, 0]
+            d_j0 = pmatrix[j, 0]
 
             d_ij0 = abs(d_i0 - d_j0)
 
             #print(d_ij, d_ij0)
-            G.add_edge(i,j, weight=d_ij+d_ij0, pheromone=1.0)
+            G.add_edge(i, j, weight=d_ij+d_ij0, pheromone=1.0)
 
-        #ipdb.set_trace()
+        # ipdb.set_trace()
         stats_recorder = acopy.plugins.StatsRecorder()
         time_limit = acopy.plugins.TimeLimit(10)
 
-        solver = VebasMPSolver(rho=.3, q=1, top=5, plugins=[acopy.plugins.Printout(), acopy.plugins.EliteTracer(), stats_recorder, time_limit])
+        solver = VebasMPSolver(rho=.3, q=1, top=5, plugins=[acopy.plugins.Printout(
+        ), acopy.plugins.EliteTracer(), stats_recorder, time_limit])
         colony = VebasColony(alpha=1, beta=3)
 
         print('solving...')
         # %%
 
-        tour = solver.solve(G,colony, limit=100, gen_size=500)
+        tour = solver.solve(G, colony, limit=100, gen_size=500)
 
         best_path = tour.nodes
 
