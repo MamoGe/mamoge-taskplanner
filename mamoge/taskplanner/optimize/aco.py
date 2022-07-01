@@ -1,18 +1,13 @@
-from abc import abstractmethod
-import networkx as nx
-from mamoge.taskplanner import nx as mamogenx
-
-from ortools.constraint_solver import routing_enums_pb2
-from ortools.constraint_solver import pywrapcp
-import numpy as np
-from itertools import permutations, chain
-
-import acopy
 import functools
+from itertools import chain
+from itertools import permutations
 from multiprocessing import Pool
 
+import acopy
+import networkx as nx
+import numpy as np
 
-import ipdb
+from mamoge.taskplanner import nx as mamogenx
 
 
 class VebasAnt(acopy.ant.Ant):
