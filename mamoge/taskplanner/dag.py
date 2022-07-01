@@ -1,7 +1,6 @@
 import itertools
 
 import networkx as nx
-import numpy.random as random
 
 from mamoge.taskplanner.location import GPSLocation, NXLayerLocation
 
