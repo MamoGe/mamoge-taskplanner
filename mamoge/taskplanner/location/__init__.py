@@ -31,7 +31,7 @@ def cached_result(func):
 
 
 class Location:
-    """Represent an abstract location and define some common method defintions."""
+    """Represent an abstract location."""
 
     def __init__(self, type: str):
         self.type = type
@@ -39,12 +39,16 @@ class Location:
     def as_dict(self) -> dict:
         return dict(type=self.type,
                     x=self.x, y=self.y, z=self.z,
-                    latitude=self.latitude, longitude=self.longitude, altitude=self.altitude)
+                    latitude=self.latitude,
+                    longitude=self.longitude,
+                    altitude=self.altitude)
 
     @abstractmethod
     def distance_to(self, other: "Location"):
         """Return the distance to the other location.
-        This can be the direct distance or some other distance (e.g. along a path)
+
+        This can be the direct distance or some other distance
+        (e.g. along a path).
         """
         pass
 
@@ -55,6 +59,7 @@ class Location:
     @property
     def x(self):
         """Return the x coordinate of the location.
+
         In case of global position, x is longitude and y the latitude value
         """
         return self.as_tuple()[0]
@@ -62,6 +67,7 @@ class Location:
     @property
     def y(self):
         """Return the y coordinate of the location.
+
         In case of global position, x is longitude and y the latitude value
         """
         return self.as_tuple()[1]
@@ -69,6 +75,7 @@ class Location:
     @property
     def z(self):
         """Return the y coordinate of the location.
+
         In case of global position, x is longitude and y the latitude value
         """
         return self.as_tuple()[2]
@@ -92,8 +99,11 @@ class Location:
 
 
 class GraphLocation(Location):
-    """Represent a Location in a Graph. Thus a :method `path_to` between two locations
+    """Represent a Location in a Graph.
+
+    Thus a :method `path_to` between two locations.
     """
+
     @abstractmethod
     def path_to(self, other: Location):
         """Return a list of :class `Location` item from the current location to the given one
@@ -102,8 +112,7 @@ class GraphLocation(Location):
 
 
 class LocationBuilder():
-    """Return a Location object based on a dict with a type
-    """
+    """Return a Location object based on a dict with a type."""
     _location_classes: Location = {}
 
     @staticmethod
@@ -113,8 +122,8 @@ class LocationBuilder():
         kw_args.pop("type")
 
         if location_type in LocationBuilder._location_classes:
-            locationClass = LocationBuilder._location_classes[location_type]
-            return locationClass(**kw_args)
+            location_class = LocationBuilder._location_classes[location_type]
+            return location_class(**kw_args)
         else:
             raise Exception(f"Could not find location type {location_type}")
 
@@ -149,7 +158,7 @@ class CartesianLocation(Location):
 
 
 class GPSLocation(Location):
-    """Represent a global location in lat and lon coordinates"""
+    """Represent a global location in lat and lon coordinates."""
 
     def __init__(self, latitude, longitude, altitude=None):
         Location.__init__(self, "gps")

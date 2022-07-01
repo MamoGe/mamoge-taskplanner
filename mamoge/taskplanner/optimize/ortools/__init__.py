@@ -11,7 +11,7 @@ import numpy as np
 from mamoge.taskplanner import nx as mamogenx
 
 # logging.getLogger().removeHandler()
-#[logging.getLogger().removeHandler(h) for h in logging.getLogger().handlers]
+# [logging.getLogger().removeHandler(h) for h in logging.getLogger().handlers]
 # logging.getLogger().addHandler(logging.StreamHandler())
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -33,14 +33,23 @@ class ORTaskOptimizer():
         # self.add_dimension("step", cost_callback=lambda G,u,v: 1)
         pass
 
-    def add_dimension(self, name: str, cost_callback: Callable[[nx.Graph, int, int], int], capacity=None, slack=0, demand_callback=None):
+    def add_dimension(self, name: str,
+                      cost_callback: Callable[[nx.Graph, int, int], int],
+                      capacity=None,
+                      slack=0,
+                      demand_callback=None):
         self.logger.debug("adding dimension %s", name)
-        self.dimensions[name] = dict(
-            cost_callback=cost_callback, capacity=capacity, slack=slack, demand_callback=demand_callback)
+        self.dimensions[name] = dict(cost_callback=cost_callback,
+                                     capacity=capacity, slack=slack,
+                                     demand_callback=demand_callback)
 
-    def add_capacity(self, name: str, capacity_callback: Callable[[nx.Graph, int], int], capacity=None, slack=0):
-        self.capacities[name] = dict(
-            capacity_callback=capacity_callback, capacity=capacity, slack=slack)
+    def add_capacity(self, name: str,
+                     capacity_callback: Callable[[nx.Graph, int], int],
+                     capacity=None,
+                     slack=0):
+        self.capacities[name] = dict(capacity_callback=capacity_callback,
+                                     capacity=capacity,
+                                     slack=slack)
 
     @abstractmethod
     def solve(self, max_time=30, num_routes=1, constraints=[]):
@@ -75,7 +84,9 @@ class ORTaskOptimizer():
             dim_cost_callback = dim_args["cost_callback"]
             dim_demand_callback = dim_args["demand_callback"]
             slack = dim_args["slack"] if dim_args["slack"] is not None else 0
-            capacity = dim_args["capacity"] if dim_args["capacity"] is not None else 300000000
+            capacity = (dim_args["capacity"]
+                        if dim_args["capacity"] is not None
+                        else 300000000)
             fix_start_cumul_to_zero = True
 
             # cost_matrix = mamogenx.G_cost_matrix(self.graph, lambda u,v: dim_cost_callback(self.graph, u,v))
@@ -106,8 +117,9 @@ class ORTaskOptimizer():
 
                     return val
                 except Exception as e:
-                    self.logger.error(
-                        f"cost_callback error ({from_index}, {to_index}), {cost_callback}")
+                    self.logger.error((f"cost_callback error ({from_index}, "
+                                       f"{to_index}), "
+                                       f"{cost_callback}"))
                     self.logger.error(e)
                     return -1
 
@@ -120,8 +132,9 @@ class ORTaskOptimizer():
                 self.routing.SetArcCostEvaluatorOfAllVehicles(callback_index)
 
                 has_arc_def = True
-            self.logger.info(
-                f"Adding dimension {dim_name}: {slack}, {capacity}, {fix_start_cumul_to_zero}")
+            self.logger.info((f"Adding dimension {dim_name}: {slack}, "
+                              f"{capacity}, "
+                              f"{fix_start_cumul_to_zero}"))
             self.routing.AddDimension(
                 callback_index,
                 slack,
@@ -146,7 +159,9 @@ class ORTaskOptimizer():
 
             cap_cost_callback = cap_args["capacity_callback"]
             slack = cap_args["slack"] if cap_args["slack"] is not None else 0
-            capacity = cap_args["capacity"] if cap_args["capacity"] is not None else 100000000
+            capacity = (cap_args["capacity"]
+                        if cap_args["capacity"] is not None
+                        else 100000000)
             fix_start_cumul_to_zero = True
 
             # capacity_vector = mamogenx.G_cost_vector(self.graph, lambda u: cap_cost_callback(self.graph, u))
@@ -155,11 +170,11 @@ class ORTaskOptimizer():
                 node = self.manager.IndexToNode(index)
                 return int(cap_cost_callback(self.graph, node))
 
-            capacity_callback_index = self.routing.RegisterUnaryTransitCallback(
+            capacity_callback_idx = self.routing.RegisterUnaryTransitCallback(
                 capacity_callback)
 
             self.routing.AddDimensionWithVehicleCapacity(
-                capacity_callback_index,
+                capacity_callback_idx,
                 slack,
                 [capacity]*num_routes,
                 fix_start_cumul_to_zero,
@@ -179,7 +194,7 @@ class ORTaskOptimizer():
             first_index = self.manager.NodeToIndex(u)
             second_index = self.manager.NodeToIndex(v)
             # same vehicle for every node in the sequence
-            #self.routing.solver().Add(self.routing.VehicleVar(first_index) == self.routing.VehicleVar(second_index))
+            self.routing.solver().Add(self.routing.VehicleVar(first_index) == self.routing.VehicleVar(second_index))
 
             kw_args = constraint.kw_args
 
@@ -189,8 +204,8 @@ class ORTaskOptimizer():
                 # TODO dynamic select dimension
                 min_value = kw_args["min"]
                 dim_str = constraint.dimension
-                constrain_arg = (dimension.CumulVar(
-                    first_index) + min_value) <= dimension.CumulVar(second_index)
+                constrain_arg = (dimension.CumulVar(first_index) +
+                                 min_value) <= dimension.CumulVar(second_index)
                 self.routing.solver().Add(constrain_arg)
                 #print("Adding min constraint", u,v,dim_str, min_value)
 
@@ -198,8 +213,8 @@ class ORTaskOptimizer():
                 # TODO dynamic select dimension
                 max_value = kw_args["max"]
                 dim_str = constraint.dimension
-                constrain_arg = (dimension.CumulVar(
-                    first_index) + max_value) > dimension.CumulVar(second_index)
+                constrain_arg = (dimension.CumulVar(first_index) +
+                                 max_value) > dimension.CumulVar(second_index)
                 self.routing.solver().Add(constrain_arg)
                 #print("Adding max constraint", u,v,dim_str, min_value)
                 # raise "Not implemented"
@@ -215,8 +230,8 @@ class ORTaskOptimizer():
                 f"Add penality {node}, {self.manager.NodeToIndex(node)}")
             i = self.manager.NodeToIndex(node)
             self.routing.AddDisjunction([i], penalty)
-            slackVar = dimension.SlackVar(i)
-            self.routing.AddToAssignment(slackVar)
+            slack_var = dimension.SlackVar(i)
+            self.routing.AddToAssignment(slack_var)
             pass
 
         self.logger.info("Defining search parameters")
@@ -303,7 +318,7 @@ class ORTaskOptimizer():
         results = {}
 
         cum = dim.CumulVar(index)
-        # results[self.penalty_dimension] = solution.Min(cum)#, solution.Max(cum)
+        # results[self.penalty_dimension] = solution.Min(cum), solution.Max(cum)
         results["cumul"] = solution.Min(cum)  # , solution.Max(cum)
         results["demand"] = 0
         results["slack"] = 0
@@ -321,7 +336,7 @@ class ORTaskOptimizer():
         return results
 
     def print_solution(self, manager, routing, solution):
-        """Prints solution on console."""
+        """Print solution on console."""
         # print('Objective: {} miles'.format(solution.ObjectiveValue()))
         index = routing.Start(0)
         plan_output = 'Route for vehicle 0:\n'
@@ -338,7 +353,7 @@ class ORTaskOptimizer():
         # plan_output += 'Route distance: {}miles\n'.format(route_distance)
 
     def extract_solution(self, num_routes, manager, routing, solution):
-        """Prints solution on console."""
+        """Print solution on console."""
         # print(f'Objective: {solution.ObjectiveValue()}')
 
         time_dim = routing.GetDimensionOrDie(self.penalty_dimension)
@@ -378,13 +393,13 @@ class ORTaskOptimizer():
                     solution, water_dim, index, prev_index, vehicle_id)
 
                 route_meta[node] = values
-                #route_meta[node]["time"] = solution.Min(time_var), solution.Max(time_var)
-                # print("Transit var", transit_var, solution.Value(transit_var))
-                #route_meta[node]["slack"] = slack_var.Min(), slack_var.Max()
-                #route_meta[node]["transit"] = transit_var.Min(), transit_var.Max()
-                #route_meta[node]["transit"] = solution.Min(transit_var), solution.Max(transit_var)
+                # route_meta[node]["time"] = solution.Min(time_var), solution.Max(time_var)
+                #  print("Transit var", transit_var, solution.Value(transit_var))
+                # route_meta[node]["slack"] = slack_var.Min(), slack_var.Max()
+                # route_meta[node]["transit"] = transit_var.Min(), transit_var.Max()
+                # route_meta[node]["transit"] = solution.Min(transit_var), solution.Max(transit_var)
 
-                #(solution.Min(time_var), solution.Max(time_var), time_dim.SlackVar(index))
+                # (solution.Min(time_var), solution.Max(time_var), time_dim.SlackVar(index))
                 # plan_output += '{0} Time({1},{2}) -> '.format(
                 # manager.IndexToNode(index), solution.Min(time_var),
                 # solution.Max(time_var))
@@ -396,11 +411,11 @@ class ORTaskOptimizer():
                 # print(f"next index {index}")
                 # route_distance += routing.GetArcCostForVehicle(
                 # previous_index, index, vehicle_id)
-                #
+
             node = manager.IndexToNode(index)
             time_var = time_dim.CumulVar(index)
             # slack_var = time_dim.SlackVar(index)
-            #transit_var = time_dim.TransitVar(index)
+            # transit_var = time_dim.TransitVar(index)
 
             # plan_output += '{0} Step({1},{2})\n'.format(node,
             #                                         solution.Min(time_var),
@@ -425,5 +440,5 @@ class ORTaskOptimizer():
             # plan_output += 'Distance of the route: {}m\n'.format(route_distance)
             # print(plan_output)
             # max_route_distance = max(route_distance, max_route_distance)
-        #print('Maximum of the route distances: {}m'.format(max_route_distance))
+        # print('Maximum of the route distances: {}m'.format(max_route_distance))
         return results, results_meta
