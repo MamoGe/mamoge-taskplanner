@@ -1,7 +1,10 @@
-import networkx as nx
-from mamoge.taskplanner.location import CartesianLocation, GPSLocation, cartesian_offset_to_latlon
-from mamoge.taskplanner.nx import G_distance_location
 import geopy.distance
+import networkx as nx
+
+from mamoge.taskplanner.location import CartesianLocation
+from mamoge.taskplanner.location import GPSLocation
+from mamoge.taskplanner.location import cartesian_offset_to_latlon
+from mamoge.taskplanner.nx import G_distance_location
 
 # %%
 

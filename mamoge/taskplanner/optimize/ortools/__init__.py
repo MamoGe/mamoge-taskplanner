@@ -1,15 +1,14 @@
-import time
 from abc import abstractmethod
-from mamoge.taskplanner.location import cached_result
-import networkx as nx
-from mamoge.taskplanner import nx as mamogenx
-
-from ortools.constraint_solver import routing_enums_pb2
-from ortools.constraint_solver import pywrapcp
-import numpy as np
-from typing import Callable
-# from mamoge.taskplanner.optimize import TaskOptimizer
 import logging
+import time
+from typing import Callable
+
+from ortools.constraint_solver import pywrapcp
+from ortools.constraint_solver import routing_enums_pb2
+import networkx as nx
+import numpy as np
+
+from mamoge.taskplanner import nx as mamogenx
 
 # logging.getLogger().removeHandler()
 #[logging.getLogger().removeHandler(h) for h in logging.getLogger().handlers]

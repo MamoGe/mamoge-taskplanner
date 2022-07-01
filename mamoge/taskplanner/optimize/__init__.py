@@ -1,6 +1,7 @@
 from abc import abstractmethod
+
 import networkx as nx
-import mamoge.taskplanner.nx as mamogenx
+
 from mamoge.taskplanner.optimize.ortools import ORTaskOptimizer
 
 
